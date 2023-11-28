@@ -1,0 +1,579 @@
+(in-package :muhai-cookingbot)
+
+(setf system:*stack-overflow-behaviour* :warn)
+
+
+
+(defparameter *initial-kitchen-state* 
+  (make-instance 
+   'kitchen-state
+   :contents
+   (list (make-instance 'fridge
+                        :contents (list (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'butter
+                                                                                      :temperature
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'degrees-celsius)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 5))
+                                                                                      :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 500)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'milk
+                                                                                      :temperature
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'degrees-celsius)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 5))
+                                                                                      :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 500)))))))
+         (make-instance 'pantry
+                        :contents (list (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'white-sugar :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 1000)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'vanilla-extract :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 100)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'almond-extract :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 100)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'all-purpose-flour :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 1000)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'almond-flour :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 1000)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'powdered-white-sugar :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 500)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'ground-nutmeg :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 500)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'ground-black-pepper :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 500)))))
+                                        (make-instance 'medium-bowl
+                                                       :used T
+                                                       :contents (list (make-instance 'salt :amount
+                                                                                      (make-instance 'amount
+                                                                                                     :unit (make-instance 'g)
+                                                                                                     :quantity (make-instance 'quantity
+                                                                                                                              :value 500)))))))
+         (make-instance 'kitchen-cabinet
+                        :contents (list
+                                   ;; bowls
+                                   (make-instance 'large-bowl) (make-instance 'large-bowl) (make-instance 'large-bowl)
+                                   (make-instance 'medium-bowl) (make-instance 'medium-bowl) (make-instance 'medium-bowl)
+                                   (make-instance 'medium-bowl) (make-instance 'medium-bowl) (make-instance 'medium-bowl)
+                                   (make-instance 'medium-bowl) (make-instance 'medium-bowl) (make-instance 'medium-bowl)
+
+                                   ;; tools
+                                   (make-instance 'whisk) (make-instance 'whisk) (make-instance 'whisk)
+                                   (make-instance 'whisk) (make-instance 'whisk) (make-instance 'whisk)
+                                   (make-instance 'whisk) (make-instance 'whisk) (make-instance 'whisk)
+
+                                   ;; baking equipment
+                                   (make-instance 'baking-tray)
+                                   (make-instance 'baking-paper)
+
+
+                                   ;; pans
+                                   (make-instance 'saucepan))))))
+
+
+(initialise-personal-dynamic-memory
+                    *fcg-constructions*
+                    `((get-kitchen ,(make-var 'kitchen-state))))
+
+
+
+(defprimitive quantity-roux((quantity-butter quantity)
+                            (quantity-flour quantity)
+                            (quantity-roux quantity))
+
+  ;;We assure to have the right quantity to do the roux, we need equal quantity of butter and flour to do a roux so, quantity(roux) = 2*quantity(flour) = 2*quantity(butter)
+  
+  ((quantity-butter quantity-flour
+                    => quantity-roux)
+  
+  (let ((quantity-to-roux (make-instance 'quantity)))
+    (if (= (value quantity-butter) (value quantity-flour))
+       (setf (value quantity-to-roux) (* 2 (value quantity-flour)))
+     (setf (value quantity-to-roux) (* 2 (min (value quantity-flour) (value quantity-butter)))))
+    (bind (quantity-roux 0.0 quantity-to-roux))
+   ))
+
+  ((quantity-butter quantity-roux
+                    => quantity-flour)
+   
+  (let ((quantity-to-flour (make-instance 'quantity)))
+    (if (= (value quantity-butter) (/ (value quantity-roux) 2))
+       (setf (value quantity-to-flour) (value quantity-butter))
+     (setf (value quantity-to-flour) (min (/ (value quantity-roux) 2) (value quantity-butter))))
+    (bind (quantity-flour 0.0 quantity-to-flour))))
+
+  ((quantity-flour quantity-roux
+                   => quantity-butter)
+   
+  (let ((quantity-to-butter (make-instance 'quantity)))
+    (if (= (value quantity-flour) (/ (value quantity-roux) 2))
+       (setf (value quantity-to-butter) (value quantity-flour))
+     (setf (value quantity-to-butter) (min (/ (value quantity-roux) 2) (value quantity-flour))))
+    (bind (quantity-butter 0.0 quantity-to-butter))))
+    
+    ((quantity-butter 
+      => quantity-flour quantity-roux)
+
+   (let ((quantity-to-flour (make-instance 'quantity))
+           (quantity-to-roux (make-instance 'quantity)))
+       (setf (value quantity-to-flour) (value quantity-butter))
+       (setf (value quantity-to-roux) (* 2 (value quantity-butter)))
+    (bind (quantity-flour 0.0 quantity-to-flour)
+          (quantity-roux 1.0 quantity-to-roux))))
+
+    ((quantity-flour 
+      => quantity-butter quantity-roux)
+
+   (let ((quantity-to-butter (make-instance 'quantity))
+           (quantity-to-roux (make-instance 'quantity)))
+       (setf (value quantity-to-butter) (value quantity-flour))
+       (setf (value quantity-to-roux) (* 2 (value quantity-flour)))
+    (bind (quantity-butter 0.0 quantity-to-butter)
+          (quantity-roux 1.0 quantity-to-roux))))
+
+        
+    ((quantity-roux
+      => quantity-flour quantity-butter)
+
+   (let ((quantity-to-flour (make-instance 'quantity))
+           (quantity-to-butter (make-instance 'quantity)))
+       (setf (value quantity-to-flour) (/ (value quantity-roux) 2))
+       (setf (value quantity-to-butter) (/(value quantity-roux) 2))
+    (bind (quantity-flour 0.0 quantity-to-flour)
+          (quantity-butter 1.0 quantity-to-butter))))
+    
+    ((
+      => quantity-roux quantity-flour quantity-butter)
+
+   (let ((quantity-to-flour (make-instance 'quantity))
+         (quantity-to-butter (make-instance 'quantity))
+         (quantity-to-roux (make-instance 'quantity)))
+       (setf (value quantity-to-flour) 7.5)
+       (setf (value quantity-to-butter) 7.5)
+       (setf (value quantity-to-roux) 15)
+    (bind (quantity-flour 1.0 quantity-to-flour)
+          (quantity-butter 1.0 quantity-to-butter)
+          (quantity-roux 1.0 quantity-to-roux)))))
+
+
+
+(defprimitive ingredients-roux((butter ingredient)
+                      (flour ingredient))
+  ;; We check if the butter and the flour are already bound
+  
+  ((butter flour
+           => )
+   t)
+
+  ((
+           => butter flour)
+   (bind (flour 0.0 (make-instance 'all-purpose-flour))
+         (butter 1.0 (make-instance 'butter))))
+  
+  ((butter
+           => flour)
+   (bind (flour 0.0 (make-instance 'all-purpose-flour))))
+
+  
+  ((flour
+           => butter)
+   (bind (butter 1.0 (make-instance 'butter)))))
+
+
+
+(defprimitive milk-for-béchamel((milk ingredient))
+  ;; We check if the milk is already bound  
+  ((milk
+           => )
+   t)
+
+  ((
+           => milk)
+   (bind (milk 0.0 (make-instance 'milk)))))
+
+
+
+(defprimitive quantity-for-béchamel((quantity-milk quantity)
+                                    (quantity-roux quantity))
+  ;; We assure to get the good amount to do the bechamel, knowing that for 140g or roux, we need 1030g of milk
+   ((quantity-milk
+                    => quantity-roux)
+  
+  (let ((quantity-to-roux (make-instance 'quantity)))
+     (setf (value quantity-to-roux) (* (/ 140 1030) (value quantity-milk)))
+    (bind (quantity-roux 0.0 quantity-to-roux))))
+
+   ((quantity-roux
+                    => quantity-milk)
+  
+  (let ((quantity-to-milk (make-instance 'quantity)))
+     (setf (value quantity-to-milk) (* (/ 1030 140) (value quantity-roux)))
+    (bind (quantity-milk 0.0 quantity-to-milk))))
+
+  ((quantity-roux quantity-milk
+                    => )
+   t))
+
+
+
+(defprimitive split-quantity-milk((quantity-milk quantity)
+                                  (quantity-quarter-milk quantity)
+                                  (quantity-half-milk quantity))
+  ;; primitive to get the good amount of milk to mix with the roux, we do it in 3 time with 1/4, 1/2 and 1/4 of the milk
+   ((quantity-milk
+                    => quantity-quarter-milk quantity-half-milk)
+    (let ((q-quarter-milk (make-instance 'quantity :value (* (value quantity-milk) 0.25)))
+          (q-half-milk (make-instance 'quantity :value (* (value quantity-milk) 0.5))))
+      (bind (quantity-quarter-milk 0.0 q-quarter-milk)
+          (quantity-half-milk 1.0 q-half-milk))))
+
+  ((quantity-milk quantity-quarter-milk quantity-half-milk
+                    => )
+   t))
+
+(defprimitive default-gram((unit unit))
+  ;; We check if the butter and the flour are already bound
+  
+  ((unit
+           => )
+   t)
+
+  ((
+           => unit)
+   (bind (unit 0.0 (make-instance 'g)))))
+
+
+(defmacro roux (container-with-roux quantity-roux kitchen-state-out kitchen-state-in butter flour quantity-butter quantity-flour unit container-butter container-flour)
+  `(do-roux ',container-with-roux ',quantity-roux ',kitchen-state-out ',kitchen-state-in ',butter ',flour ',quantity-butter ',quantity-flour ',unit ',container-butter ',container-flour))
+
+(defun do-roux (container-with-roux quantity-roux kitchen-state-out kitchen-state-in butter flour quantity-butter quantity-flour unit container-butter container-flour)
+  ;;To do a roux, we heat up butter and then we add flour, all in a saucepan, we mix to create the homogeneous mixture
+  (list `(quantity-roux ,quantity-butter ,quantity-flour ,quantity-roux)
+        
+        `(ingredients-roux ,butter ,flour)
+        
+        `(bind degrees-celsius ?unit-temp ,(make-instance 'degrees-celsius))
+        
+        `(bind quantity ?quantity-temperature ,(make-instance 'quantity :value 50))
+        
+        `(bind saucepan ?saucepan ,(make-instance 'saucepan))
+        
+        `(bind counter-top ?counter-top,(make-instance 'counter-top))
+        
+        `(fetch-and-proportion ,container-flour
+                               ?ks-after-flour
+                               ,kitchen-state-in
+                               ?target-container-flour
+                               ,flour
+                               ,quantity-flour
+                               ,unit)
+        
+        `(fetch-and-proportion ,container-butter
+                               ?ks-after-butter
+                               ?ks-after-flour
+                               ?target-container-butter
+                               ,butter
+                               ,quantity-butter
+                               ,unit)
+        
+        ;; we take the saucepan from the pantry and put it on the countertop to do the transfer-content primitive
+        '(transfer-container ?new-dest
+                          ?ks-after-pan-ct
+                          ?saucepan-new-ks
+                          ?saucepan
+                          ?ks-after-butter
+                          ?counter-top)
+        
+        `(transfer-contents ?container-with-butter-and-flour
+                            ?container-with-rest
+                            ?ks-after-transfering
+                            ?ks-after-pan-ct
+                            ?saucepan-new-ks
+                            ,container-butter
+                            ?quantity-opt
+                            ?unit-opt)
+        
+        '(bring-up-to-temperature ?container-with-ingredients-at-temperature
+                                  ?ks-after-temp
+                                  ?ks-after-transfering
+                                  ?container-with-butter-and-flour
+                                  ?quantity-temperature
+                                  ?unit-temp)
+        
+        `(transfer-contents ?container-with-butter-and-flour2
+                            ?container-with-rest2
+                            ?ks-after-transfering2
+                            ?ks-after-temp
+                            ?container-with-ingredients-at-temperature
+                            ,container-flour
+                            ?quantity-opt2
+                            ?unit-opt2)
+        
+        `(mix ,container-with-roux
+              ,kitchen-state-out
+              ?ks-after-transfering2
+              ?container-with-butter-and-flour2
+              ?mixing-tool)))
+
+
+(defmacro béchamel(container-with-béchamel kitchen-state-out kitchen-state-in container-with-roux milk quantity-roux quantity-milk unit container-milk)
+  `(do-béchamel ',container-with-béchamel ',kitchen-state-out ',kitchen-state-in ',container-with-roux ',milk ',quantity-roux ',quantity-milk ',unit ',container-milk))
+
+(defun do-béchamel (container-with-béchamel kitchen-state-out kitchen-state-in container-with-roux milk quantity-roux quantity-milk unit container-milk)
+  
+  ;; To do a béchamel, we take a roux and add milk in three times, we add salt, pepper, and ground-nutmeg we heat up and mix the béchamel
+  
+  (list `(milk-for-béchamel ,milk)
+        
+        `(quantity-for-béchamel ,quantity-milk ,quantity-roux)
+        
+        `(bind ground-nutmeg ?ground-nutmeg ,(make-instance 'ground-nutmeg))
+        
+        `(bind ground-black-pepper ?ground-black-pepper ,(make-instance 'ground-black-pepper))
+        
+        `(bind salt ?salt ,(make-instance 'salt))
+        
+        `(split-quantity-milk ,quantity-milk
+                              ?quantity-quarter-milk
+                              ?quantity-half-milk)
+        `(bind quantity ?quantity-spice ,(make-instance 'quantity :value 1))
+        
+        `(fetch-and-proportion ,container-milk
+                               ?ks-after-milk
+                               ,kitchen-state-in
+                               ?target-container-milk
+                               ,milk
+                               ,quantity-milk
+                               ,unit)
+        
+        `(fetch-and-proportion ?container-salt
+                               ?ks-after-salt
+                               ?ks-after-milk
+                               ?target-container-salt
+                               ?salt
+                               ?quantity-spice
+                               ,unit)
+        
+        `(fetch-and-proportion ?container-pepper
+                               ?ks-after-pepper
+                               ?ks-after-salt
+                               ?target-container-pepper
+                               ?ground-black-pepper
+                               ?quantity-spice
+                               ,unit)
+        
+        `(fetch-and-proportion ?container-ground-nutmeg
+                               ?ks-after-ground-nutmeg
+                               ?ks-after-pepper
+                               ?target-container-ground-nutmeg
+                               ?ground-nutmeg
+                               ?quantity-spice
+                               ,unit)
+        
+        `(transfer-contents ?container-with-butter-and-flour-and-quarter-milk
+                            ?container-with-rest-milk-three-quarter
+                            ?ks-after-transfering-quarter-milk
+                            ?ks-after-ground-nutmeg
+                            ,container-with-roux
+                            ,container-milk
+                            ?quantity-quarter-milk
+                            ,unit)
+        
+        '(mix ?container-with-mix-bech1
+              ?ks-mix-bech1
+              ?ks-after-transfering-quarter-milk
+              ?container-with-butter-and-flour-and-quarter-milk
+              ?mixing-tool2)
+        
+        `(transfer-contents ?container-with-butter-and-flour-and-three-quarter-milk
+                            ?container-with-rest-milk-quarter
+                            ?ks-after-transfering-three-quarter-milk
+                            ?ks-mix-bech1
+                            ?container-with-mix-bech1
+                            ?container-with-rest-milk-three-quarter
+                            ?quantity-half-milk
+                            ,unit)
+        
+        '(mix ?container-with-mix-bech2
+              ?ks-mix-bech2
+              ?ks-after-transfering-three-quarter-milk
+              ?container-with-butter-and-flour-and-three-quarter-milk
+              ?mixing-tool3)
+        
+        '(transfer-contents ?container-with-whole-milk
+                            ?container-with-rest-2
+                            ?ks-after-transfering-whole-milk
+                            ?ks-mix-bech2
+                            ?container-with-mix-bech2
+                            ?container-with-rest-milk-quarter
+                            ?quantity-opt3
+                            ?unit-opt3)
+        
+        '(mix ?container-with-bech-no-spice
+              ?ks-mix-bech-no-spice
+              ?ks-after-transfering-whole-milk
+              ?container-with-whole-milk
+              ?mixing-tool4)
+        
+        '(transfer-contents ?bech-with-salt
+                            ?container-with-rest-salt
+                            ?ks-after-salting
+                            ?ks-mix-bech-no-spice
+                            ?container-with-bech-no-spice
+                            ?container-salt
+                            ?quantity-salt
+                            ?unit-salt)
+        
+        '(transfer-contents ?bech-with-salt-pepper
+                            ?container-with-rest-pepper
+                            ?ks-after-peppering
+                            ?ks-after-salting
+                            ?bech-with-salt
+                            ?container-pepper
+                            ?quantity-pepper
+                            ?unit-pepper)
+        
+        '(transfer-contents ?bech-cold-not-mixed
+                            ?container-with-rest-nutmeg
+                            ?ks-after-nutmeg
+                            ?ks-after-peppering
+                            ?bech-with-salt-pepper
+                            ?container-ground-nutmeg
+                            ?quantity-nutmeg
+                            ?unit-nutmeg)
+        
+        '(mix ?container-with-bech-cold
+              ?ks-mix-bech-cold
+              ?ks-after-nutmeg
+              ?bech-cold-not-mixed
+              ?mixing-tool5)
+        
+        `(bring-up-to-temperature ,container-with-béchamel
+                                  ,kitchen-state-out
+                                  ?ks-mix-bech-cold
+                                  ?container-with-bech-cold
+                                  ?quantity-temperature
+                                  ?unit-temp)
+        ))
+
+(defun macroexpand-irl-program(irl-program)
+ (loop for primitive in irl-program
+       if (macro-function(first primitive))
+       append (eval primitive)
+       else
+       collect primitive))
+
+
+                        
+
+(evaluate-irl-program (macroexpand-irl-program `((get-kitchen ?kitchen-state-in)
+                                                 
+                                                 (default-gram ?unit)
+                                                 (bind milk ?milk ,(make-instance 'milk))
+                                                 (bind flour ?flour ,(make-instance 'flour))
+                                                 (bind butter ?butter ,(make-instance 'butter))
+                                                 (bind quantity ?quantity-butter ,(make-instance 'quantity :value 50))
+                                                 (bind quantity ?quantity-flour ,(make-instance 'quantity :value 50))
+                                                 (bind quantity ?quantity-milk ,(make-instance 'quantity :value 736))
+                                                 
+                                                 (fetch-and-proportion ?container-milk
+                                                                        ?ks-after-milk-recep
+                                                                        ?kitchen-state-in
+                                                                        ?target-container-milk
+                                                                        ?milk
+                                                                        ?quantity-milk
+                                                                        ?unit)
+                                                 
+                                                 (fetch-and-proportion ?container-flour
+                                                                        ?ks-after-flour-recep
+                                                                        ?ks-after-milk-recep
+                                                                        ?target-container-flour
+                                                                        ?flour
+                                                                        ?quantity-flour
+                                                                        ?unit)
+        
+                                                 (fetch-and-proportion ?container-butter
+                                                                        ?ks-after-butter-recep
+                                                                        ?ks-after-flour-recep
+                                                                        ?target-container-butter
+                                                                        ?butter
+                                                                        ?quantity-butter
+                                                                        ?unit)
+                                             
+                                                 
+                                                 (roux ?container-with-roux
+                                                       ?quantity-roux
+                                                       ?kitchen-state-after-roux
+                                                       ?ks-after-butter-recep
+                                                       ?butter
+                                                       ?flour
+                                                       ?quantity-butter
+                                                       ?quantity-flour
+                                                       ?unit
+                                                       ?container-butter
+                                                       ?container-flour)
+                                                 
+
+                                                 (béchamel ?container-with-béchamel
+                                                           ?kitchen-state-out
+                                                           ?kitchen-state-after-roux
+                                                           ?container-with-roux
+                                                           ?milk
+                                                           ?quantity-roux
+                                                           ?quantity-milk
+                                                           ?unit
+                                                           ?container-milk)
+                                                 
+                                                 )) nil)
+
+

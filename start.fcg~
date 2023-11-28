@@ -1,0 +1,27 @@
+(in-package :fcg-editor)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;;                        ;;
+;; Loading the cookingbot ;;
+;;                        ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+;; Set path to the cookingbot directory
+(defparameter *cookingbot-path* "C:/Users/joeys/Desktop/AIPP/cookingbot/")
+
+(progn
+  (load (merge-pathnames "package.fcg" *cookingbot-path*))
+  (load (merge-pathnames "ontology.fcg" *cookingbot-path*))
+  (load (merge-pathnames "primitives_2.fcg" *cookingbot-path*))
+  (load (merge-pathnames "visualisations.fcg" *cookingbot-path*))
+  (load (merge-pathnames "personal-dynamic-memory.fcg" *cookingbot-path*))
+  (load (merge-pathnames "language-processing/de-render.fcg" *cookingbot-path*))
+  (load (merge-pathnames "language-processing/understand.fcg" *cookingbot-path*))
+  (load (merge-pathnames "language-processing/expansions.fcg" *cookingbot-path*))
+  (load (merge-pathnames "language-processing/utils.fcg" *cookingbot-path*))
+  (load (merge-pathnames "language-processing/heuristics.fcg" *cookingbot-path*))
+  (load (merge-pathnames "grammar.fcg" *cookingbot-path*))
+  )
+
+;; Set package for evaluation
+(setf *package-for-evaluation* :muhai-cookingbot)
